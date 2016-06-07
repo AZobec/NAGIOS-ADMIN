@@ -1,0 +1,118 @@
+#!/bin/bash
+
+#Auteur : Arnaud ZOBEC
+#Date : 06-06-2016
+#Version : 00001-06-06
+
+
+########### Déclaration des variables ##############
+SERVICEGROUPS_PATH=/usr/local/nagios/etc/objects/servicegroups
+HOSTGROUPS_PATH=/usr/local/nagios/etc/objects/hostgroups
+HOSTSDIR_PATH=/usr/local/nagios/etc/objects/hosts
+SERVICE_TEMPLATE_PATH=../templates
+DISPLAY_LENGTH=10
+
+
+########### HOSTS ################
+###Asking HOSTNAME
+HOSTNAME=$(whiptail --title "NAGIOS-ADMIN-ADD-MACHINE" --inputbox "Tapez le nom de la machine au format vmachine.bva.net" 10 60 vmachine.bva.net 3>&1 1>&2 2>&3)
+exitstatus=$?
+if [[ $? == 0 ]]; then
+	echo "Le nom de la machine est:" $HOSTNAME
+else
+	echo "You chose Cancel for HOSTNAME ==> DON'T FORGET TO GIVE IT NEXT"
+fi
+
+###Asking IP
+IP_ADDRESS=$(whiptail --title "NAGIOS-ADMIN-ADD-MACHINE" --inputbox "Tapez l'adresse IP de la machine au format xx.xx.xx.xx" 10 60 "10.192.0.0" 3>&1 1>&2 2>&3)
+if [[ $? == 0 ]]; then
+	echo "L'IP de la machine est:" $IP_ADDRESS
+else
+	echo "You chose Cancel for IP_ADDRESS ==> DON'T FORGET TO GIVE IT NEXT"
+fi
+
+###Asking Folder
+array=($(ls $HOSTSDIR_PATH))
+RADIOLIST=()
+for ((i=0; i<${#array[@]}; i++))
+        do
+                RADIOLIST+=("${array[$i]}" "$i" "OFF")
+                #RADIOLIST+=("${array[$i]}" "OFF")
+        done
+let ARLENGTH=${#array[@]}
+HOSTDIR=$(whiptail --title "NAGIOS-ADMIN-ADD-MACHINE" --radiolist \
+ "Sélectionnez l'emplacement du fichier de configuration" 20 78 $DISPLAY_LENGTH "${RADIOLIST[@]}" 3>&1 1>&2 2>&3)
+
+if [[ $? == 0 ]]; then
+	echo "Le répertoire choisi est:" $HOSTDIR
+else
+	echo "You chose Cancel for HOSTDIR ==> DON'T FORGET TO GIVE IT NEXT"
+fi
+
+
+
+########## HOSTGROUPS ############
+# Select the Host Group for the machine
+array=($(ls $HOSTGROUPS_PATH))
+RADIOLIST=()
+for ((i=0; i<${#array[@]}; i++))
+        do
+                RADIOLIST+=("${array[$i]}" "$i" "OFF")
+        done
+let ARLENGTH=${#array[@]}
+#CHOIX_HOSTGROUP=$(whiptail --title "NAGIOS-ADMIN-ADD-MACHINE" --checklist "Sélectionnez le ou les service(s) que vous voulez attribuer à votre host" 20 78 $ARLENGTH "${RADIOLIST[@]}" 3>&1 1>&2 2>&3)
+CHOIX_HOSTGROUP=$(whiptail --title "NAGIOS-ADMIN-ADD-MACHINE" --checklist \
+"Sélectionnez le ou les service(s) que vous voulez attribuer à votre host" 20 78 $DISPLAY_LENGTH "${RADIOLIST[@]}" 3>&1 1>&2 2>&3)
+CHOIX_HOSTGROUP=$(echo $CHOIX_HOSTGROUP | sed -e "s/\"//g" | sed -e "s/ /,/g")
+
+if [[ $? == 0 ]]; then
+	echo "Le hostgroup choisi est:" $CHOIX_HOSTGROUP
+else
+	echo "You chose Cancel for HOSTGROUPS ==> DON'T FORGET TO GIVE IT NEXT"
+fi
+
+
+########## SERVICEGROUPS #############
+# Select the Service Group for the machine
+array=($(ls $SERVICEGROUPS_PATH))
+RADIOLIST=()
+for ((i=0; i<${#array[@]}; i++))
+        do
+                RADIOLIST+=("${array[$i]}" "$i" "OFF")
+        done
+
+let ARLENGTH=${#array[@]}
+
+CHOIX_SERVICE=$(whiptail --title "NAGIOS-ADMIN-ADD-MACHINE" --checklist \
+"Sélectionnez le ou les service(s) que vous voulez attribuer à votre host" 20 78 $DISPLAY_LENGTH "${RADIOLIST[@]}" 3>&1 1>&2 2>&3)
+
+if [[ $? == 0 ]]; then
+	CHOIX_SERVICE=$(echo $CHOIX_SERVICE | sed -e "s/\"//g" | sed -e "s/ /,/g")
+	echo "Le service choisi est:" $CHOIX_SERVICE
+else
+	echo "You chose Cancel for SERVICEGROUPS ==> DON'T FORGET TO GIVE IT NEXT"
+fi
+
+
+########## Ecriture dans un fichier ############
+echo "define host{
+        use                     linux-server
+        host_name               $HOSTNAME
+        alias                   $HOSTNAME
+        address                 $IP_ADDRESS
+        hostgroups              $CHOIX_HOSTGROUP
+        }" > $HOSTSDIR_PATH/$HOSTDIR/$HOSTNAME.cfg
+
+
+
+if [[ $CHOIX_SERVICE == *"web-services"* ]]; then
+    cat $SERVICE_TEMPLATE_PATH/template_web-services.cfg | sed "s/_HOSTNAME_/$HOSTNAME/g" >> $HOSTSDIR_PATH/$HOSTDIR/$HOSTNAME.cfg
+fi
+
+if [[ $CHOIX_SERVICE == *"admin-services"* ]]; then
+    cat $SERVICE_TEMPLATE_PATH/template_admin-services.cfg | sed "s/_HOSTNAME_/$HOSTNAME/g" >> $HOSTSDIR_PATH/$HOSTDIR/$HOSTNAME.cfg
+
+fi
+
+
+
