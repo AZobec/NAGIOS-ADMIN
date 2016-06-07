@@ -10,44 +10,4 @@ These scripts are just some tests. Don't use it in production (or customize it b
 ##My directory Tree
 For an example, this is my directory tree of my Nagios install
 
-├── bin
-├── etc
-│   ├── objects
-│   │   ├── commands
-│   │   ├── hostgroups
-│   │   ├── hosts
-│   │   │   ├── esx_hosts
-│   │   │   ├── linux_hosts
-│   │   │   ├── web_hosts
-│   │   │   └── windows_hosts
-│   │   └── servicegroups
-│   └── templates
-├── include
-├── libexec
-│   └── eventhandlers
-│       ├── distributed-monitoring
-│       └── redundancy-scenario1
-├── sbin
-├── share
-│   ├── contexthelp
-│   ├── docs
-│   │   └── images
-│   ├── images
-│   │   └── logos
-│   ├── includes
-│   │   └── rss
-│   │       └── extlib
-│   ├── js
-│   ├── locale
-│   │   ├── de
-│   │   │   └── LC_MESSAGES
-│   │   └── fr
-│   │       └── LC_MESSAGES
-│   ├── media
-│   ├── ssi
-│   └── stylesheets
-└── var
-    ├── archives
-    ├── rw
-    └── spool
-        └── checkresults
+![My Nagios tree](http://i.imgur.com/Lt6jTJ2.png)
